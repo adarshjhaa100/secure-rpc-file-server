@@ -8,8 +8,8 @@ import os
 
 print('KDC program')
 
-# Code to register a file server and User Node
-def registerNode(message):
+# Code to register a file server
+def registerFS(message,fileName):
     message=json.loads(message)
     print(message['id'])
     
@@ -21,16 +21,9 @@ def registerNode(message):
             "key":generate_key(),
             "status":True,
         }
-        filename=""
-        if(message['isFileServer']):
-            filename="kdcFiles/FS_keys.csv"
-        else:
-            filename="kdcFiles/client_keys.csv"
-
-        saveFS(fsInfo,filename)
+        saveFS(fsInfo,fileName)
         return json.dumps(fsInfo)
     return json.dumps({"id":message.id,"status":False})
-
 
 # Generating assymetric key which is stored and is private for each node 
 def generate_key():
@@ -38,7 +31,7 @@ def generate_key():
     print(key)
     return key.decode('utf-8')
 
-# Store The data of file server and Node to a database 
+# Store The data of file server to a database 
 def saveFS(fsInfo,filename):
     print(fsInfo)
     # input_df = pd.read_csv(filename)
@@ -65,7 +58,7 @@ server=SimpleXMLRPCServer(("localhost",port_num))
 print(f"KDClistening on {port_num}...")
 
 # Registration of procedures
-server.register_function(registerNode,'registerFileServer')
+server.register_function(registerFS,'registerFileServer')
 
 # Run the server
 server.serve_forever()

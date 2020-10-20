@@ -14,7 +14,7 @@ def registerServer(proxy):
     serverMessage=json.dumps({
         "id":None,
         "key":None,
-        "isFileServer":True
+        "isFileServer":False
     })
     print(serverMessage)
 
