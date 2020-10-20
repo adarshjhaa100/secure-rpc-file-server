@@ -1,3 +1,5 @@
+# This program is to provide functionality of KDC
+
 from xmlrpc.server import SimpleXMLRPCServer
 import json
 import secrets
