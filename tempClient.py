@@ -6,7 +6,7 @@ import json
 
 # Registration of File Server
 # number=input('Enter Port of KDC')
-number=8000
+number=8001
 proxy=xmlrpc.client.ServerProxy(f"http://localhost:{number}/")
 
 # Request kdc server to register FS

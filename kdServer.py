@@ -60,7 +60,7 @@ def readFiles(filename):
 
 # readFiles()
 
-port_num=8000
+port_num=8001
 server=SimpleXMLRPCServer(("localhost",port_num))
 print(f"KDClistening on {port_num}...")
 
