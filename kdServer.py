@@ -18,7 +18,8 @@ def registerFS(message):
         fsInfo={
             "id":secrets.token_hex(16),
             "key":generate_key(),
-            "status":True
+            "status":True,
+            "isFS":True
         }
         saveFS(fsInfo)
         return json.dumps(fsInfo)
