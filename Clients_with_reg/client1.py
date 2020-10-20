@@ -1,9 +1,36 @@
 import xmlrpc.client
+import json
 
 # File server id
 
-number=input('Enter Port of File Server')
+number = 8100
+proxy = xmlrpc.client.ServerProxy(f"http://localhost:{number}/")
 
+# Request kdc server to register FS
+
+
+def registerServer(proxy):
+    serverMessage = json.dumps({
+        "id": None,
+        "key": None,
+        "isFileServer": False
+    })
+    print(serverMessage)
+
+    kdcMessage = json.loads(proxy.registerFileServer(serverMessage))
+    saveFsDetails(kdcMessage)
+
+# Store the id and encryption key given
+
+
+def saveFsDetails(kdcMessage):
+    print(kdcMessage)
+    print("saved my details")
+
+registerServer(proxy)
+
+
+number=int(input("Enter the port of file server you want to communicate with:"))
 proxy=xmlrpc.client.ServerProxy(f"http://localhost:{number}/")
 
 
