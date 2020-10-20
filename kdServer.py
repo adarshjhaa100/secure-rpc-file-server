@@ -3,6 +3,7 @@ import json
 import secrets
 import pandas as pd
 from cryptography.fernet import Fernet
+import os
 
 
 print('KDC program')
@@ -33,13 +34,21 @@ def generate_key():
 # Store The data of file server to a database 
 def saveFS(fsInfo):
     print(fsInfo)
-    df=pd.DataFrame({'id':[fsInfo['id']],'key':[fsInfo['key']]},index=[fsInfo['id']])
-    df.to_csv("kdcFiles/FSinfo.csv",mode='a',header=False)
+    # input_df = pd.read_csv('kdcFiles/KDC_keys.csv')
+    # print("hello input df",input_df)
+    df = pd.DataFrame({
+                        'id': [fsInfo['id']], 
+                        'key': [fsInfo['key']]
+                      }, index=[fsInfo['id']])
+    if(os.path.getsize('kdcFiles/KDC_keys.csv') == 0):
+        df.to_csv("kdcFiles/KDC_keys.csv",header=True)
+    else:
+        df.to_csv("kdcFiles/KDC_keys.csv",mode='a',header=False)
     print("File server saved")
 
 # Read File
 def readFiles():
-    df=pd.read_csv('kdcFiles/FSinfo.csv')
+    df=pd.read_csv('kdcFiles/KDC_keys.csv')
     print(df[df['id']=='952717ae1263a0cb2b68a6046b691d32'])
 
 # readFiles()
