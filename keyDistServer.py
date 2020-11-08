@@ -6,9 +6,23 @@ import secrets
 import pandas as pd
 from cryptography.fernet import Fernet
 import os
-
+import atexit
 
 print('KDC program')
+
+def clearFiles(filename):
+    file =open(filename,"r+")
+    file.truncate(0)
+    file.close()
+
+
+def exithandler():
+    print('app exiting')
+    clearFiles('kdcFiles/FS_keys.csv')
+    clearFiles('kdcFiles/client_keys.csv')
+    
+atexit.register(exithandler)
+
 
 # Code to register a file server and User Node
 def registerNode(message):
@@ -62,7 +76,7 @@ def readFiles(filename):
 
 # readFiles()
 
-port_num=8100
+port_num=8001
 server=SimpleXMLRPCServer(("localhost",port_num))
 print(f"KDClistening on {port_num}...")
 

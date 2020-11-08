@@ -5,7 +5,7 @@ import json
 # Client Details obtained from KDC
 clientDetails={}
 
-# Registration of a new File Server at kDC at port 8000
+# Registration of a new user node at kDC at port 8001
 def registerNode():
     # Info of KDC
     number=8001
