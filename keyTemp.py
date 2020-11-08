@@ -27,7 +27,6 @@ def exithandler():
     for i in range(countFS):
         os.popen(f'rm -R folder{i+1}')
 
-
 # Registering the exit function
 atexit.register(exithandler)
 
@@ -60,10 +59,12 @@ def registerNode(message):
         return fsInfo
     return json.dumps({"id":message.id,"status":False})
 
+
 # Generating assymetric key which is stored and is private for each node 
 def generate_key():
     key = Fernet.generate_key()
     return key.decode('utf-8')
+
 
 # Store The data of file server and Node to a database 
 def saveFS(fsInfo,filename,countFS):
@@ -89,12 +90,13 @@ def saveFS(fsInfo,filename,countFS):
     
     return servList
 
+
 # get fernet object
-def getFernetObject(filename,aliceID):
-    print('get fernet')
+def getFernetObject(filename,ID):
+    # print('get fernet')
     df=pd.read_csv(filename)
-    key=df[df['id']==aliceID]['key'].tolist()
-    print(key)
+    key=df[df['id']==ID]['key'].tolist()
+    # print(key)
     key=key[0]
     f=Fernet(key.encode('utf-8'))
     return f
@@ -113,10 +115,11 @@ def serveAlice(details):
     print(details)
     
     fclient=getFernetObject('kdcFiles/client_keys.csv',aliceID)    
-    # fserver=getFernetObject('kdcFiles/FS_keys.csv',bobID)
+    fserver=getFernetObject('kdcFiles/FS_keys.csv',bobID)
 
     toBob=json.dumps({'aliceID':aliceID,'Kab':session_key})
-
+    toBob=fserver.encrypt(toBob.encode('utf-8')).decode('utf-8')
+    
     toAlice=json.dumps({
         'Ra1':randomChallenge,
         'bobID':bobID,
@@ -125,7 +128,8 @@ def serveAlice(details):
     }).encode('utf-8')
 
     toAlice=fclient.encrypt(toAlice).decode('utf-8')
-    print(toAlice)
+    
+    # print(toAlice)
     return toAlice
     
 

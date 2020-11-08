@@ -5,10 +5,14 @@ import os
 import json
 import time
 
+from cryptography import fernet
+from cryptography.fernet import Fernet
+
 # Initialize the file server by selecting the directory
 file_server = ''
 # Variable to store registration 
 serverDetails={}
+port_num=8100
 
 
 # Register the server with KDC
@@ -25,10 +29,11 @@ def registerFS():
     kdcMessage=json.loads(proxy.registerFileServer(sendMessage))
     
     countFS=kdcMessage['countFS']
-    print(os.popen(f'mkdir folder{countFS}'))
+    os.popen(f'mkdir folder{countFS}')
     time.sleep(0.1)
-    global file_server
+    global file_server,port_num
     file_server=f'folder{countFS}'
+    port_num+=countFS
 
     # Store details to global variable
     global serverDetails
@@ -57,11 +62,10 @@ def runCommand(command:str):
 
 
 # Serve client node once Authenticated
-def serveClient():
-    port_num=int(input("Enter the port number"))
+def serveClient(port_num):
     server=SimpleXMLRPCServer(("localhost",port_num))
     print(f"listening on {port_num}...")
-
+    
     # Register function
     server.register_function(runCommand,'runCommand')
 
@@ -69,12 +73,49 @@ def serveClient():
     server.serve_forever()
 
 
+# Read client's auth
+
+# Step 3, 4,5 
+def decodeClientMessage(message):
+    message=json.loads(message)
+    # print(message)
+    key=serverDetails['key']
+    f=Fernet(key)
+    toBob=f.decrypt(message['toBob'].encode('utf-8')).decode('utf-8')
+    toBob=json.loads(toBob)
+    
+    f2=Fernet(toBob['Kab']) #Session Encryptor
+
+    Ra2=message['Ra2']
+    Ra2=int(f2.decrypt(Ra2.encode('utf-8')).decode('utf-8'))
+    
+    print(toBob,Ra2)
+
+    return "jkewfwekwfew"
+    
+
+# Authenticate client using needham schroeder
+# 3. get Kab(Ra2), Kb(aliceID,Kab)-->toBob
+# 4. send Kab(Ra2-1,Rb)
+# 5. get Kab(Rb-1)
+def authClient():
+    global port_num
+    server=SimpleXMLRPCServer(("localhost",port_num))
+    print(f"listening for auth {port_num}...")
+    
+
+
+    # start listening  on the given port 
+    server.register_function(decodeClientMessage,'decodeClient')
+    server.serve_forever()
+    
 
 registerFS()
 print(serverDetails)
-
 os.chdir(file_server)
-
 print(os.popen('pwd').read())
+
+authClient()
+
 # serveClient()
 
