@@ -1,4 +1,5 @@
 # This program is to provide functionality of FileServer node
+from os import error
 import random
 from xmlrpc.server import SimpleXMLRPCServer
 import xmlrpc.client
@@ -14,6 +15,7 @@ file_server = ''
 # Variable to store registration 
 serverDetails={}
 port_num=8100
+Kab=''#Session encryptor
 
 
 # Register the server with KDC
@@ -53,11 +55,22 @@ def isValidCommand(command:str):
     return True
 
 # Run the user command
-def runCommand(command:str):
+def runCommand(command):
+    command=Kab.decrypt(command.encode('utf-8')).decode('utf-8')
     if(isValidCommand(command)):
         if(command.find('pwd')!=-1):
             return f'/{file_server}'
-        return os.popen(command).read()
+        
+        obj=os.popen(command)
+        returnVal=obj.read()
+        print(obj.errors)
+
+        # if(command.find('ls')>0):
+        #     if(len(returnVal)==0):
+        #         returnVal='no file currently exists'
+        
+        # returnVal=Kab.encrypt(returnVal.encode('utf-8')).decode('utf-8')
+        return returnVal
     else:
         return f"Command '{command}' not found"
 
@@ -77,7 +90,6 @@ def serveClient(port_num):
 # Read client's auth
 
 # Step 3, 4 
-Kab=''#Session encryptor
 Rb=0  #Random Challenge
 def authClientFS(message):
     message=json.loads(message)
@@ -113,7 +125,6 @@ def authRandom(message):
     if(int(message)+1==Rb):
         return Kab.encrypt('Acknowleged'.encode('utf-8')).decode('utf-8')
     raise 'Error'
-
 
 # Authenticate client using needham schroeder
 # 3. get Kab(Ra2), Kb(aliceID,Kab)-->toBob

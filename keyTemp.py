@@ -55,7 +55,7 @@ def registerNode(message):
         fsInfo['countFS']=countFS
 
         fsInfo=json.dumps(fsInfo)
-        print(fsInfo)
+        # print(fsInfo)
         return fsInfo
     return json.dumps({"id":message.id,"status":False})
 
@@ -112,7 +112,7 @@ def serveAlice(details):
     bobID=details['bobID']
     randomChallenge=details['Ra1']
     session_key=generate_key()
-    print(details)
+    # print(details)
     
     fclient=getFernetObject('kdcFiles/client_keys.csv',aliceID)    
     fserver=getFernetObject('kdcFiles/FS_keys.csv',bobID)

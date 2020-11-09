@@ -105,14 +105,17 @@ def authNSP(choiceFS=0):
 # All the ports of FS will start from 8080
 def connectToFS():
     portFS=clientDetails['port']
+    fsession=Fernet(clientDetails['Kab'])
     proxy=xmlrpc.client.ServerProxy(f"http://localhost:{portFS}/")
     while(True):
         print(f'file-server-{portFS}-commandline',end='$ ')
         myCommand=input()
         if(myCommand=='end'):
             break
-        print(proxy.runCommand(myCommand))
-
+        myCommand=fsession.encrypt(myCommand.encode('utf-8')).decode('utf-8')
+        result=proxy.runCommand(myCommand)
+        # result=fsession.decrypt(result.encode('utf-8')).decode('utf-8')
+        print(result)
 
 # Print all available servers
 def printServers():
@@ -127,5 +130,6 @@ printServers()  #list of servers
 choiceFS=int(input("choose bob"))
 
 authNSP(choiceFS)
-print(clientDetails)
-# connectToFS()
+# print(clientDetails)
+
+connectToFS()
