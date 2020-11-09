@@ -1,4 +1,5 @@
 # This program is to provide functionality of FileServer node
+import random
 from xmlrpc.server import SimpleXMLRPCServer
 import xmlrpc.client
 import os
@@ -75,8 +76,10 @@ def serveClient(port_num):
 
 # Read client's auth
 
-# Step 3, 4,5 
-def decodeClientMessage(message):
+# Step 3, 4 
+Kab=''#Session encryptor
+Rb=0  #Random Challenge
+def authClientFS(message):
     message=json.loads(message)
     # print(message)
     key=serverDetails['key']
@@ -85,28 +88,46 @@ def decodeClientMessage(message):
     toBob=json.loads(toBob)
     
     f2=Fernet(toBob['Kab']) #Session Encryptor
-
+    global Kab
+    Kab=f2
+    
     Ra2=message['Ra2']
     Ra2=int(f2.decrypt(Ra2.encode('utf-8')).decode('utf-8'))
-    
     print(toBob,Ra2)
-
-    return "jkewfwekwfew"
     
+    # Step4: send Ra2-1 and Rb encrypted with Kab
+    global Rb
+    Rb=random.randint(1111,9999)
+    toAlice=json.dumps({
+        "Ra2":Ra2-1,
+        "Rb":Rb
+    }).encode('utf-8')
+
+    toAlice=f2.encrypt(toAlice).decode('utf-8')
+    return toAlice
+    
+#Step 5: Authenticate client's random challenge
+def authRandom(message):
+    message=Kab.decrypt(message.encode('utf-8')).decode('utf-8')
+    print(message)
+    if(int(message)+1==Rb):
+        return Kab.encrypt('Acknowleged'.encode('utf-8')).decode('utf-8')
+    raise 'Error'
+
 
 # Authenticate client using needham schroeder
 # 3. get Kab(Ra2), Kb(aliceID,Kab)-->toBob
 # 4. send Kab(Ra2-1,Rb)
 # 5. get Kab(Rb-1)
-def authClient():
+def authServeClient():
     global port_num
     server=SimpleXMLRPCServer(("localhost",port_num))
     print(f"listening for auth {port_num}...")
     
-
-
     # start listening  on the given port 
-    server.register_function(decodeClientMessage,'decodeClient')
+    server.register_function(authClientFS,'authClientFS')
+    server.register_function(authRandom,'authRandom')
+    server.register_function(runCommand,'runCommand')
     server.serve_forever()
     
 
@@ -115,7 +136,7 @@ print(serverDetails)
 os.chdir(file_server)
 print(os.popen('pwd').read())
 
-authClient()
+authServeClient()
 
 # serveClient()
 
