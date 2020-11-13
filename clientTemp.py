@@ -121,6 +121,18 @@ def authNSP(choiceFS=0):
     print(f'Files of the FileServer {choiceFS} mounted to client')
     clientDetails['port']=portFS
 
+def helpCommand():
+    print()
+    print("These are the list of available commands:")
+    print('ls    - list files in current directory')
+    print('pwd   - list present working directory')
+    print("cp a b- copy file from 'a' to 'b' ")
+    print("cat f - list contents of file 'f' ")
+    print('end   - end the session')
+    print('fs-list - list file servers')
+    print('cd fileserverID - change to the mentioned fileServer')
+    print()
+
 # Once Client is registered, connect to a registered File Server
 # All the ports of FS will start from 8080
 def connectToFS():
@@ -135,6 +147,12 @@ def connectToFS():
         # In case user wnats to end session
         if(myCommand=='end'):
             break
+
+        #help
+        if(myCommand.find('help')>-1):
+            helpCommand()
+            continue    
+
         # get a list of file servers
         if(myCommand.find('fs-list')>-1):
             printServers()
