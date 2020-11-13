@@ -11,6 +11,7 @@ import atexit
 print('KDC program')
 
 countFS=0
+registerKey=Fernet(b'bPFK7Z6AGpWbeohwh3oiQXsYOgYypdeEEUq5ST0_wrU=') #A fernet key temporarily saved for secure reigstration
 
 
 # Mthod to clear files
@@ -33,7 +34,9 @@ atexit.register(exithandler)
 # Code to register a file server and User Node
 def registerNode(message):
     global countFS
+    message=registerKey.decrypt(message.encode('utf-8')).decode('utf-8')
     message=json.loads(message)
+    print(message)
     # id:16 bit
     # Key: Fernet key
     if(message['id']==None):
@@ -56,6 +59,8 @@ def registerNode(message):
 
         fsInfo=json.dumps(fsInfo)
         # print(fsInfo)
+        fsInfo=registerKey.encrypt(fsInfo.encode('utf-8')).decode('utf-8')
+        print("File server saved")
         return fsInfo
     return json.dumps({"id":message.id,"status":False})
 
@@ -77,8 +82,7 @@ def saveFS(fsInfo,filename,countFS):
         df.to_csv(filename,header=True)
     else:
         df.to_csv(filename,mode='a',header=False)
-    print("File server saved")
-
+    
     # Return a list of server objects
     servList=[]
     if(os.path.getsize('kdcFiles/FS_keys.csv')>0):
@@ -90,6 +94,29 @@ def saveFS(fsInfo,filename,countFS):
     
     return servList
 
+
+#Update file list at the clients end
+# details: AliceID
+def updateFileList(details):
+    details=json.loads(details)
+    clientID=details['clientID']
+    fclient=getFernetObject('kdcFiles/client_keys.csv',clientID)    
+    
+    servList=[]
+    if(os.path.getsize('kdcFiles/FS_keys.csv')>0):
+        df=pd.read_csv('kdcFiles/FS_keys.csv')['id']
+        ports=pd.read_csv('kdcFiles/FS_keys.csv')['port']
+        for index,val in enumerate(df):
+            servList.append([val,int(ports[index])])
+    
+    serverList=json.dumps({
+        'serverList':servList
+    }).encode('utf-8')
+
+    serverList=fclient.encrypt(serverList).decode('utf-8')
+
+    return serverList
+    
 
 # get fernet object
 def getFernetObject(filename,ID):
@@ -140,7 +167,7 @@ print(f"KDClistening on {port_num}...")
 # Registration of procedures
 server.register_function(registerNode,'registerFileServer')
 server.register_function(serveAlice,'serveAlice')
-
+server.register_function(updateFileList,'updateFileList')
 
 # Run the server
 server.serve_forever()

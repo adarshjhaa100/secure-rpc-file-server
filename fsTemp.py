@@ -6,8 +6,6 @@ import xmlrpc.client
 import os
 import json
 import time
-
-from cryptography import fernet
 from cryptography.fernet import Fernet
 
 # Initialize the file server by selecting the directory
@@ -16,6 +14,7 @@ file_server = ''
 serverDetails={}
 port_num=8100
 Kab=''#Session encryptor
+registerKey=Fernet(b'bPFK7Z6AGpWbeohwh3oiQXsYOgYypdeEEUq5ST0_wrU=') #A fernet key temporarily saved for secure reigstration
 
 
 # Register the server with KDC
@@ -29,8 +28,14 @@ def registerFS():
         "key":None,
         "isFileServer":True
     })
-    kdcMessage=json.loads(proxy.registerFileServer(sendMessage))
+    sendMessage=registerKey.encrypt(sendMessage.encode('utf-8')).decode('utf-8')
+    kdcMessage=proxy.registerFileServer(sendMessage)
     
+    kdcMessage=registerKey.decrypt(kdcMessage.encode('utf-8')).decode('utf-8')
+    kdcMessage=json.loads(kdcMessage)
+    # print(kdcMessage)
+
+
     countFS=kdcMessage['countFS']
     os.popen(f'mkdir folder{countFS}')
     time.sleep(0.1)
@@ -45,11 +50,11 @@ def registerFS():
 
 # Check for valid command
 def isValidCommand(command:str):
-    a=max(  command.find('ls'),
+    a=max(  command.find('ls'), 
             command.find('pwd'),
             command.find('cp'),
-            command.find('cat'),
-            command.find('close'))
+            command.find('cat'),)
+
     if(a==-1):
         return False
     return True
@@ -57,19 +62,13 @@ def isValidCommand(command:str):
 # Run the user command
 def runCommand(command):
     command=Kab.decrypt(command.encode('utf-8')).decode('utf-8')
+    
     if(isValidCommand(command)):
         if(command.find('pwd')!=-1):
             return f'/{file_server}'
         
         obj=os.popen(command)
         returnVal=obj.read()
-        print(obj.errors)
-
-        # if(command.find('ls')>0):
-        #     if(len(returnVal)==0):
-        #         returnVal='no file currently exists'
-        
-        # returnVal=Kab.encrypt(returnVal.encode('utf-8')).decode('utf-8')
         return returnVal
     else:
         return f"Command '{command}' not found"
@@ -86,9 +85,7 @@ def serveClient(port_num):
     # start listening  on the given port 
     server.serve_forever()
 
-
 # Read client's auth
-
 # Step 3, 4 
 Rb=0  #Random Challenge
 def authClientFS(message):
