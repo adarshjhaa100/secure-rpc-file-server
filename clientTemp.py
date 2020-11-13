@@ -7,6 +7,19 @@ import random
 clientDetails={}
 registerKey=Fernet(b'bPFK7Z6AGpWbeohwh3oiQXsYOgYypdeEEUq5ST0_wrU=') #A fernet key temporarily saved for secure reigstration
 
+# Class to add colored text to console
+class bcolors:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKCYAN = '\033[96m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+
+
 # Registration of a new user node at kDC at port 8001
 def registerNode():
     # Info of KDC
@@ -141,7 +154,7 @@ def connectToFS():
     proxy=xmlrpc.client.ServerProxy(f"http://localhost:{portFS}/")
     while(True):
         getUpdatedList()
-        print(f'file-server-{portFS}-commandline',end='$ ')
+        print(f'{bcolors.OKCYAN}{bcolors.BOLD}file-server-{portFS}-commandline{bcolors.ENDC}',end='$ ')
         myCommand=input()
         getUpdatedList()
         # In case user wnats to end session
