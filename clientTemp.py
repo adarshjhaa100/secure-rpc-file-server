@@ -156,7 +156,7 @@ def printServers():
     print()
     print('sl', 'fsname', '  port')
     for index,val in enumerate(serverList):
-        print(index,f' folder{val[1]-8101}',f' {val[1]}' )
+        print(index,f' folder{val[1]-8100}',f' {val[1]}' )
 
 
 # authorize and Connect to a give fileServer
