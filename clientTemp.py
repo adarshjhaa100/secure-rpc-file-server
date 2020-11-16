@@ -134,6 +134,7 @@ def authNSP(choiceFS=0):
     print(f'Files of the FileServer {choiceFS} mounted to client')
     clientDetails['port']=portFS
 
+#Function to execute help command in console
 def helpCommand():
     print()
     print("These are the list of available commands:")
@@ -143,7 +144,7 @@ def helpCommand():
     print("cat f - list contents of file 'f' ")
     print('end   - end the session')
     print('fs-list - list file servers')
-    print('cd fileserverID - change to the mentioned fileServer')
+    print('cd fileserverID - change directory to the mentioned fileServer')
     print()
 
 # Once Client is registered, connect to a registered File Server
@@ -178,8 +179,9 @@ def connectToFS():
 
         myCommand=fsession.encrypt(myCommand.encode('utf-8')).decode('utf-8')
         result=proxy.runCommand(myCommand)
-        # result=fsession.decrypt(result.encode('utf-8')).decode('utf-8')
-        print(result)
+        result=fsession.decrypt(result.encode('utf-8')).decode('utf-8')
+        result=json.loads(result)
+        print(result['val'])
 
 # Print all available servers
 def printServers():

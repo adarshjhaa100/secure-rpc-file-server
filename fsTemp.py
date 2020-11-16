@@ -1,5 +1,4 @@
 # This program is to provide functionality of FileServer node
-from os import error
 import random
 from xmlrpc.server import SimpleXMLRPCServer
 import xmlrpc.client
@@ -48,6 +47,7 @@ def registerFS():
     serverDetails=kdcMessage
     print("saved my details")
 
+
 # Check for valid command
 def isValidCommand(command:str):
     a=max(  command.find('ls'), 
@@ -59,16 +59,42 @@ def isValidCommand(command:str):
         return False
     return True
 
+# function to return val of cat command
+def catFile(command):
+    filename=command.split()[1]
+    f=open(filename,'r+')
+    s=''
+    for line in f:
+        s+=line
+    returnVal={'val':s}
+    return returnVal
+
+
 # Run the user command
 def runCommand(command):
     command=Kab.decrypt(command.encode('utf-8')).decode('utf-8')
     
     if(isValidCommand(command)):
         if(command.find('pwd')!=-1):
-            return f'/{file_server}'
+            returnVal=json.dumps({'val':f'/{file_server}'})
+            returnVal=Kab.encrypt(returnVal.encode('utf-8')).decode('utf-8')
+            return returnVal
         
         obj=os.popen(command)
-        returnVal=obj.read()
+        returnVal={'val':obj.read()}
+
+        # In case user wants to display contents of a file
+        if(command.find('cat')>-1):
+            returnVal=catFile(command)
+            # filename=command.split()[1]
+            # f=open(filename,'r+')
+            # s=''
+            # for line in f:
+            #     s+=line
+            # returnVal={'val':s}
+        
+        returnVal=json.dumps(returnVal)
+        returnVal=Kab.encrypt(returnVal.encode('utf-8')).decode('utf-8')
         return returnVal
     else:
         return f"Command '{command}' not found"
