@@ -5,6 +5,20 @@ from cryptography.fernet import Fernet
 import random
 # Client Details obtained from KDC
 clientDetails={}
+registerKey=Fernet(b'bPFK7Z6AGpWbeohwh3oiQXsYOgYypdeEEUq5ST0_wrU=') #A fernet key temporarily saved for secure reigstration
+
+# Class to add colored text to console
+class bcolors:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKCYAN = '\033[96m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+
 
 # Registration of a new user node at kDC at port 8001
 def registerNode():
@@ -17,7 +31,12 @@ def registerNode():
         "key":None,
         "isFileServer":False
     })
-    kdcMessage=json.loads(proxy.registerFileServer(sendMessage))
+
+    sendMessage=registerKey.encrypt(sendMessage.encode('utf-8')).decode('utf-8')
+    kdcMessage=proxy.registerFileServer(sendMessage)
+    kdcMessage=registerKey.decrypt(kdcMessage.encode('utf-8')).decode('utf-8')
+    kdcMessage=json.loads(kdcMessage)
+    
     kdcMessage['Kab']=''
 
     # Store details to global variable
@@ -25,10 +44,23 @@ def registerNode():
     clientDetails=kdcMessage
     print("saved my details")
 
-
 def getFernetObject():
     f=Fernet(clientDetails['key'].encode('utf-8'))
     return f
+
+# Get updated list of file servers
+def getUpdatedList():
+    number=8001
+    global clientDetails
+    proxy=xmlrpc.client.ServerProxy(f"http://localhost:{number}/")
+    details=json.dumps({
+        'clientID':clientDetails['id']
+    })
+    message=proxy.updateFileList(details)
+    key=getFernetObject()
+    message=key.decrypt(message.encode('utf-8')).decode('utf-8')
+    message=json.loads(message)
+    clientDetails['serverlist']=message['serverList']
 
 # Needham schroeder
 # Step 1 : Alice gives Ra1, aliceID and bobID
@@ -57,10 +89,10 @@ def authNSP(choiceFS=0):
 
     #Check random challenge for authenticity of kdc server
     if(message['Ra1']!=randomChallenge):
-        print('KDC server unknown')
+        print('KDC server illegal')
         return None
     else:
-        print('KDC server legal')
+        pass
 
     # Save the Session key
     clientDetails['Kab']=message['Kab']
@@ -87,7 +119,8 @@ def authNSP(choiceFS=0):
     RaBob=fromBob['Ra2']
     
     if(Ra2==RaBob+1):
-        print('legal Bob')
+        # print('legal Bob')
+        pass
     else:
         print('illegal bob')
         return None     
@@ -97,9 +130,21 @@ def authNSP(choiceFS=0):
     verifyRandom=fsession.encrypt(str(verifyRandom).encode('utf-8')).decode('utf-8')  
     ack=proxy2.authRandom(verifyRandom) 
     ack=fsession.decrypt(ack.encode('utf-8')).decode('utf-8')
-    print(ack)
-    print('Files of the FileServer mounted to client')
+    # print(ack)
+    print(f'Files of the FileServer {choiceFS} mounted to client')
     clientDetails['port']=portFS
+
+def helpCommand():
+    print()
+    print("These are the list of available commands:")
+    print('ls    - list files in current directory')
+    print('pwd   - list present working directory')
+    print("cp a b- copy file from 'a' to 'b' ")
+    print("cat f - list contents of file 'f' ")
+    print('end   - end the session')
+    print('fs-list - list file servers')
+    print('cd fileserverID - change to the mentioned fileServer')
+    print()
 
 # Once Client is registered, connect to a registered File Server
 # All the ports of FS will start from 8080
@@ -108,10 +153,29 @@ def connectToFS():
     fsession=Fernet(clientDetails['Kab'])
     proxy=xmlrpc.client.ServerProxy(f"http://localhost:{portFS}/")
     while(True):
-        print(f'file-server-{portFS}-commandline',end='$ ')
+        getUpdatedList()
+        print(f'{bcolors.OKCYAN}{bcolors.BOLD}file-server-{portFS}-commandline{bcolors.ENDC}',end='$ ')
         myCommand=input()
+        getUpdatedList()
+        # In case user wnats to end session
         if(myCommand=='end'):
             break
+
+        #help
+        if(myCommand.find('help')>-1):
+            helpCommand()
+            continue    
+
+        # get a list of file servers
+        if(myCommand.find('fs-list')>-1):
+            printServers()
+            continue
+
+        # In case user wants to change directory
+        if(myCommand.find('cd')>-1 and len(myCommand.split())>1 ):
+            connectAndAuth(myCommand.split()[1])
+            break
+
         myCommand=fsession.encrypt(myCommand.encode('utf-8')).decode('utf-8')
         result=proxy.runCommand(myCommand)
         # result=fsession.decrypt(result.encode('utf-8')).decode('utf-8')
@@ -120,16 +184,23 @@ def connectToFS():
 # Print all available servers
 def printServers():
     serverList=clientDetails['serverlist']
+    print()
+    print('sl', 'fsname', '  port')
     for index,val in enumerate(serverList):
-        print(index, val[0], val[1])
+        print(index,f' folder{val[1]-8100}',f' {val[1]}' )
+
+
+# authorize and Connect to a give fileServer
+def connectAndAuth(choiceFS):
+    authNSP(int(choiceFS))
+    # print(clientDetails)
+    connectToFS()
 
 
 registerNode()
 
 printServers()  #list of servers
-choiceFS=int(input("choose bob"))
+choiceFS=int(input("choose File Server to connect to: "))
 
-authNSP(choiceFS)
-# print(clientDetails)
+connectAndAuth(choiceFS)
 
-connectToFS()

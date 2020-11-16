@@ -89,10 +89,10 @@ def authNSP(choiceFS=0):
 
     #Check random challenge for authenticity of kdc server
     if(message['Ra1']!=randomChallenge):
-        print('KDC server unknown')
+        print('KDC server illegal')
         return None
     else:
-        print('KDC server legal')
+        pass
 
     # Save the Session key
     clientDetails['Kab']=message['Kab']
@@ -200,7 +200,7 @@ def connectAndAuth(choiceFS):
 registerNode()
 
 printServers()  #list of servers
-choiceFS=int(input("choose bob"))
+choiceFS=int(input("choose File Server to connect to: "))
 
 connectAndAuth(choiceFS)
 
