@@ -86,12 +86,6 @@ def runCommand(command):
         # In case user wants to display contents of a file
         if(command.find('cat')>-1):
             returnVal=catFile(command)
-            # filename=command.split()[1]
-            # f=open(filename,'r+')
-            # s=''
-            # for line in f:
-            #     s+=line
-            # returnVal={'val':s}
         
         returnVal=json.dumps(returnVal)
         returnVal=Kab.encrypt(returnVal.encode('utf-8')).decode('utf-8')
