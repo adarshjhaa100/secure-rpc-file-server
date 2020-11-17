@@ -1,4 +1,6 @@
-# This program is to provide functionality of KDC
+# Registers file servers and User nodes, providing them symmetric keys.  
+# Provides session keys for authentication using Needham Schroeder Protocol.
+
 
 from xmlrpc.server import SimpleXMLRPCServer
 import json
